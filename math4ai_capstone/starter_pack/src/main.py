@@ -5,7 +5,7 @@ matplotlib.use("TkAgg")
 
 from validation import Validation
 from nn import NeuralNetwork
-from softmax import SoftMaxClassification
+from softmax_classfication import SoftMaxClassification
 
 
 

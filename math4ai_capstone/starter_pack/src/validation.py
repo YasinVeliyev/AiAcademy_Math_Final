@@ -3,8 +3,7 @@ import copy
 
 
 
-def accuracy(y_pred,y_test):
-    return y_pred[y_pred==y_test].size/y_test.size
+
 
 
 class Validation():
@@ -15,16 +14,16 @@ class Validation():
         self.y = y
         self.X_val = X_val
         self.y_val = y_val
-        self.best_model = None
         self.results = []
         self.models = []
         self.params = params
         
     def fit(self):
+        self.results = []
+        self.models = []
         for i in range(self.cv):
             np.random.seed(i)
             model = self.estimator(**copy.deepcopy(self.params));
-            print(model.__dict__)
             model.fit(self.X,self.y)
             y_pred = model.predict(self.X_val)
             self.results.append(self.accuracy(y_pred))
@@ -46,7 +45,11 @@ class Validation():
         print(f"Loss mean for {self.cv} models:{l_m:.5f}")
         print(f"95 % Confidence Interval for Accuracy mean:({low_a:.5f},{high_a:.5f})")
         print(f"95 % Confidence Interval for Loss mean:({low_l:.5f},{high_l:.5f})")
+
     
+
+
+        
     def accuracy(self,y_pred):
         return y_pred[y_pred==self.y_val].size/self.y_val.size
-        
+            
