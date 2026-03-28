@@ -4,7 +4,7 @@ import copy
 from utils import softmax
 
 class SoftMaxClassification:
-    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 5000,batch_size=32):
+    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=32):
         self.penalty = penalty
         self.lamda = lamda
         self.learning_rate = learning_rate
@@ -76,12 +76,15 @@ class SoftMaxClassification:
             raise ValueError("Only for 2 dimension")
             
         w_diff = self.W[0] - self.W[1]
-        
-        x0 = -(X[:,1] * w_diff[1] + w_diff[-1])/w_diff[0]
-     
+        b_diff = self.b[0,0] - self.b[0,1]
+        X1 = np.sort(X[:,1])
+        X0 = -(X1 * w_diff[1] + b_diff)/w_diff[0]
+         
         plt.title("Decision Boundary")
+        plt.ylabel("X1")
+        plt.xlabel("X0")
         plt.scatter(X[:,0],X[:,1],c=y)
-        plt.plot(x0,X[:,1],color="red")
+        plt.plot(X0,X1,color="red")
         plt.show()
 
 
@@ -128,6 +131,9 @@ class SoftMaxClassification:
         plt.xlabel("Iteration")
         plt.grid()
         plt.show()
+        
+        
+        
         
         
         

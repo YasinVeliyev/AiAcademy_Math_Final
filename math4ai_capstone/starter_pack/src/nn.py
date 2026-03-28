@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import copy
 from utils import softmax
 
+
 class NeuralNetwork():
-    def __init__(self,size=None,lamda = 1e-4,batch_size=32,learning_rate = 0.05,optimizer="SGD",epochs = 200,activation_functions = (np.tanh,softmax)):
-        self.size = size if size else []
+    def __init__(self,size=None,lamda = 1e-4,batch_size=32,learning_rate = 0.05,optimizer="sgd",epochs = 200,activation_functions = (np.tanh,softmax)):
+        self.size = size if size else [32]
         self.batch_size = batch_size
         self.learning_rate=learning_rate
         self.cache = {}
@@ -63,7 +64,7 @@ class NeuralNetwork():
         return -np.mean(np.sum(Y*np.log(y_predict + 1e-9),axis=1)) + self._l2()
     
     def _optimize(self):
-        if self.optimizer=="SGD":
+        if self.optimizer=="sgd":
             self.sgd()
         elif self.optimizer=="adam":
             self.adam()
