@@ -1,10 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from utils import softmax
 import copy
 
 
 class SoftMaxClassification:
-    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=32,optimizer="sgd"):
+    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=64,optimizer="sgd"):
         self.penalty = penalty
         self.lamda = lamda
         self.learning_rate = learning_rate
@@ -32,7 +33,7 @@ class SoftMaxClassification:
                 Y_batch = Y_shuffled[j:j+self.batch_size]
                 self._forward(X_batch)
                 self.back_propagation(X_batch,Y_batch)
-                self.optimize()
+                self._optimize()
                 
             A = self._forward(X_train)   
             L =self._calculate_loss(Y,A)
@@ -59,13 +60,16 @@ class SoftMaxClassification:
         self.cache["dW"] =  dLdZ.T @ X+ reg_term
         self.cache["db"] = np.sum(dLdZ, axis=0, keepdims=True)
         
-    def optimize(self):  
+    def _optimize(self):  
         self.W -= self.learning_rate * self.cache["dW"]
         self.b -= self.learning_rate * self.cache["db"]
         
+    def _predict(self,X_val):
+        Z = X_val @ self.W.T + self.b
+        return softmax(Z)
         
     def predict(self,X_val):
-        A = self._forward(X_val)
+        A = self._predict(X_val)
         return np.argmax(A,axis=1)
 
     def _calculate_loss(self,Y,y_predict):
@@ -73,7 +77,6 @@ class SoftMaxClassification:
     
     def plot_decison_boundary(self,X,y,ax=None):
         if ax is None:
-            import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         if X.shape[1] > 2:
             raise ValueError("Only for 2 dimension")
@@ -130,12 +133,17 @@ class SoftMaxClassification:
         if ax is None:
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         
-        ax.set_title(f"Optimizer:{self.optimizer.capitalize()};Learning rate:{self.learning_rate}")
+        ax.set_title(f"Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate}")
         ax.plot(range(len(self.loss)),self.loss)
         ax.set_ylabel("Log Loss")
         ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))
         ax.set_xlabel("Iteration")
         ax.grid()
+        
+        
+        
+        
+        
         
         
         

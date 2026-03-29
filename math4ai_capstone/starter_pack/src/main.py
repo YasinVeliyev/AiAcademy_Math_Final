@@ -47,11 +47,10 @@ y_m_test=data_moons['y_test']
 
 validation_m = Validation(SoftMaxClassification,X_m_train,y_m_train,X_m_val,y_m_val,params={"max_iter":200})
 acc_m,model_m = validation_m.fit()
-print(model_m.plot_loss())
 validation_m.report()
 
 
 validation_nn_m = Validation(NeuralNetwork,X_m_train,y_m_train,X_m_val,y_m_val,params={"size":[32],"optimizer":"adam"})
 acc_m,model_nn_m = validation_nn_m.fit()
-# print(model_nn_m.plot_loss())
+
 validation_nn_m.report()

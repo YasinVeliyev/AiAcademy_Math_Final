@@ -1,15 +1,17 @@
 import numpy as np
-from utils import softmax
 import copy
+import matplotlib.pyplot as plt
 
+
+from utils import softmax
 
 
 
 class NeuralNetwork():
-    def __init__(self,size=None,lamda = 1e-4,batch_size=32,learning_rate = 0.05,optimizer="sgd",epochs = 200,activation_functions = (np.tanh,softmax)):
-        self.size = size if size else [32]
+    def __init__(self,size=[32],lamda = 1e-4,batch_size=64,learning_rate = 0.05, optimizer="sgd",epochs = 200,activation_functions = (np.tanh,softmax)):
+        self.size = size
         self.batch_size = batch_size
-        self.learning_rate=learning_rate
+        self.learning_rate = learning_rate
         self.cache = {}
         self.optimizer=optimizer
         self.lamda = lamda
@@ -203,17 +205,17 @@ class NeuralNetwork():
         ax.contourf(xx, yy, Z, alpha=0.3)
         ax.contour(xx, yy, Z, colors="red", linewidths=1)
         ax.scatter(X_2d[:, 0], X_2d[:, 1], c=y, edgecolors="k", linewidths=0.5)
-        ax.set_title(f"Decision Boundary {'(PCA 2D)' if X.shape[1] > 2 else ''} \nOptimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate};Epochs:{self.epochs}")
+        ax.set_title(f"Decision Boundary {'(PCA 2D)' if X.shape[1] > 2 else ''} \nOptimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate};Epochs:{self.epochs};Loss: {self.loss[-1]:.4f}")
         ax.set_xlabel("PC1" if X.shape[1] > 2 else "X0")
         ax.set_ylabel("PC2" if X.shape[1] > 2 else "X1")
                 
     def plot_loss(self,ax=None):
         if ax is None:
-            import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         ax.set_title(f"Optimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate}")
         ax.plot(range(len(self.loss)),self.loss)
         ax.set_ylabel(f"Training Log Loss")
-        ax.set_xlabel("Epocs")
+        ax.set_xlabel("Epochs")
         ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))
         ax.grid()
+        
