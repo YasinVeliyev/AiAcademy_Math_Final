@@ -73,6 +73,7 @@ class SoftMaxClassification:
     
     def plot_decison_boundary(self,X,y,ax=None):
         if ax is None:
+            import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         if X.shape[1] > 2:
             raise ValueError("Only for 2 dimension")
@@ -82,11 +83,12 @@ class SoftMaxClassification:
         X1 = np.sort(X[:,1])
         X0 = -(X1 * w_diff[1] + b_diff)/w_diff[0]
          
-        ax.set_title(f"Decision Boundary Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f}")
+        ax.set_title(f"Decision Boundary Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f};Iteration:{self.max_iter}")
         ax.set_ylabel("X1")
         ax.set_xlabel("X0")
         ax.scatter(X[:,0],X[:,1],c=y)
         ax.plot(X0,X1,color="red")
+     
 
 
     @classmethod
