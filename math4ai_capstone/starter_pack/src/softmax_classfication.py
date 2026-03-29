@@ -1,10 +1,10 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import copy
 from utils import softmax
+import copy
+
 
 class SoftMaxClassification:
-    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=32):
+    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=32,optimizer="sgd"):
         self.penalty = penalty
         self.lamda = lamda
         self.learning_rate = learning_rate
@@ -12,6 +12,7 @@ class SoftMaxClassification:
         self.batch_size = batch_size
         self.loss = []
         self.cache = {}
+        self.optimizer=optimizer
     
     def fit(self,X_train,y_train):
         self.loss = []
@@ -70,8 +71,9 @@ class SoftMaxClassification:
     def _calculate_loss(self,Y,y_predict):
         return -np.mean(np.sum(Y*np.log(y_predict + 1e-9),axis=1)) + self._l2()
     
-    def plot_decison_boundary(self,X,y):
-        plt.figure(figsize=(8,6))
+    def plot_decison_boundary(self,X,y,ax=None):
+        if ax is None:
+            fig, ax = plt.subplots(1,1,figsize=(8,6))
         if X.shape[1] > 2:
             raise ValueError("Only for 2 dimension")
             
@@ -80,12 +82,11 @@ class SoftMaxClassification:
         X1 = np.sort(X[:,1])
         X0 = -(X1 * w_diff[1] + b_diff)/w_diff[0]
          
-        plt.title("Decision Boundary")
-        plt.ylabel("X1")
-        plt.xlabel("X0")
-        plt.scatter(X[:,0],X[:,1],c=y)
-        plt.plot(X0,X1,color="red")
-        plt.show()
+        ax.set_title(f"Decision Boundary Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f}")
+        ax.set_ylabel("X1")
+        ax.set_xlabel("X0")
+        ax.scatter(X[:,0],X[:,1],c=y)
+        ax.plot(X0,X1,color="red")
 
 
     @classmethod
@@ -123,19 +124,16 @@ class SoftMaxClassification:
         return diff
    
     
-    def plot_loss(self):
-        plt.figure(figsize=(8,6))
-        plt.plot(range(len(self.loss)),self.loss)
-        plt.ylabel("Log Loss")
-        plt.yticks(np.linspace(min(self.loss), max(self.loss), 10))
-        plt.xlabel("Iteration")
-        plt.grid()
-        plt.show()
+    def plot_loss(self,ax=None):
+        if ax is None:
+            fig, ax = plt.subplots(1,1,figsize=(8,6))
         
-        
-        
-        
-        
+        ax.set_title(f"Optimizer:{self.optimizer.capitalize()};Learning rate:{self.learning_rate}")
+        ax.plot(range(len(self.loss)),self.loss)
+        ax.set_ylabel("Log Loss")
+        ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))
+        ax.set_xlabel("Iteration")
+        ax.grid()
         
         
         

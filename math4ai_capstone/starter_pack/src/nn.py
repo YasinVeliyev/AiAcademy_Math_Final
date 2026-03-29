@@ -1,7 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import copy
 from utils import softmax
+import copy
+
 
 
 class NeuralNetwork():
@@ -175,12 +175,44 @@ class NeuralNetwork():
         result = self._predict(X)
         return np.argmax(result,axis = 1)
         
-    def plot_loss(self):
-        plt.figure(figsize=(8,6))
-        plt.title("Training Loss")
-        plt.plot(range(len(self.loss)),self.loss)
-        plt.ylabel(f"Log Loss ({self.optimizer.capitalize()} optimizer)")
-        plt.yticks(np.linspace(min(self.loss), max(self.loss), 10))
-        plt.xlabel("Epocs")
-        plt.grid()
-        plt.show()
+    def plot_decision_boundary(self, X, y, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+        if X.shape[1] > 2:
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components=2)
+            X_2d = pca.fit_transform(X)
+        else:
+            X_2d = X
+    
+        x0_min, x0_max = X_2d[:, 0].min() - 0.5, X_2d[:, 0].max() + 0.5
+        x1_min, x1_max = X_2d[:, 1].min() - 0.5, X_2d[:, 1].max() + 0.5
+    
+        xx, yy = np.meshgrid(np.linspace(x0_min, x0_max, 200),
+                             np.linspace(x1_min, x1_max, 200))
+        if X.shape[1] > 2:
+            grid_original = pca.inverse_transform(np.c_[xx.ravel(), yy.ravel()])
+            Z = self.predict(grid_original)
+        else:
+            Z = self.predict(np.c_[xx.ravel(), yy.ravel()])
+    
+        Z = Z.reshape(xx.shape)
+    
+        ax.contourf(xx, yy, Z, alpha=0.3)
+        ax.contour(xx, yy, Z, colors="red", linewidths=1)
+        ax.scatter(X_2d[:, 0], X_2d[:, 1], c=y, edgecolors="k", linewidths=0.5)
+        ax.set_title(f"Decision Boundary {'(PCA 2D)' if X.shape[1] > 2 else ''} \nOptimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate}")
+        ax.set_xlabel("PC1" if X.shape[1] > 2 else "X0")
+        ax.set_ylabel("PC2" if X.shape[1] > 2 else "X1")
+            
+    def plot_loss(self,ax=None):
+        if ax is None:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1,1,figsize=(8,6))
+        ax.set_title(f"Optimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};Learning rate:{self.learning_rate}")
+        ax.plot(range(len(self.loss)),self.loss)
+        ax.set_ylabel(f"Training Log Loss")
+        ax.set_xlabel("Epocs")
+        ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))
+        ax.grid()
