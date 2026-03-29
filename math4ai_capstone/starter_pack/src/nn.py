@@ -211,7 +211,7 @@ class NeuralNetwork():
         if ax is None:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1,1,figsize=(8,6))
-        ax.set_title(f"Optimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};Learning rate:{self.learning_rate}")
+        ax.set_title(f"Optimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate}")
         ax.plot(range(len(self.loss)),self.loss)
         ax.set_ylabel(f"Training Log Loss")
         ax.set_xlabel("Epocs")
