@@ -205,7 +205,7 @@ class NeuralNetwork():
         ax.contourf(xx, yy, Z, alpha=0.3)
         ax.contour(xx, yy, Z, colors="red", linewidths=1)
         ax.scatter(X_2d[:, 0], X_2d[:, 1], c=y, edgecolors="k", linewidths=0.5)
-        ax.set_title(f"Decision Boundary {'(PCA 2D)' if X.shape[1] > 2 else ''} \nOptimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate};Epochs:{self.epochs};Loss: {self.loss[-1]:.4f}")
+        ax.set_title(f"{self.__class__.__name__} Decision Boundary\n {'(PCA 2D)' if X.shape[1] > 2 else ''} \nOptimizer:{self.optimizer.capitalize()}; Hidden Layer Size:{self.size};\nLearning rate:{self.learning_rate};Epochs:{self.epochs};Loss: {self.loss[-1]:.4f}")
         ax.set_xlabel("PC1" if X.shape[1] > 2 else "X0")
         ax.set_ylabel("PC2" if X.shape[1] > 2 else "X1")
                 

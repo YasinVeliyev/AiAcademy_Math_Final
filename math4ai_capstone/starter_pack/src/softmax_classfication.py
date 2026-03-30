@@ -86,7 +86,7 @@ class SoftMaxClassification:
         X1 = np.sort(X[:,1])
         X0 = -(X1 * w_diff[1] + b_diff)/w_diff[0]
          
-        ax.set_title(f"Decision Boundary Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f};Iteration:{self.max_iter}")
+        ax.set_title(f"{self.__class__.__name__} Decision Boundary\n Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f};Iteration:{self.max_iter}")
         ax.set_ylabel("X1")
         ax.set_xlabel("X0")
         ax.scatter(X[:,0],X[:,1],c=y)
@@ -133,7 +133,7 @@ class SoftMaxClassification:
         if ax is None:
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         
-        ax.set_title(f"Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate}")
+        ax.set_title(f"{self.__class__.__name__} Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate}")
         ax.plot(range(len(self.loss)),self.loss)
         ax.set_ylabel("Log Loss")
         ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))

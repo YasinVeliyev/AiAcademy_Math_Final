@@ -46,6 +46,7 @@ class Validation():
         low_a, high_a = confidence_interval_for_accuracy
         low_l, high_l = confidence_interval_for_loss
         print(f"--- Statistics for {self.cv} Seeds ---")
+        print(f"Model: {self.estimator.__name__}")
         print(f"Accuracy mean:{a_m:.5f}")
         print(f"Loss mean for {self.cv} models:{l_m:.5f}")
         print(f"95 % Confidence Interval for Accuracy mean:({low_a:.5f},{high_a:.5f})")
@@ -73,7 +74,7 @@ class Validation():
                     f"{prec:.2f}",
                     ha="center", fontsize=9)
         
-        ax.set_title("Per-Class Accuracy")
+        ax.set_title(f"{self.estimator.__name__}  Per-Class Accuracy")
         ax.set_xlabel("Class")
         ax.set_ylabel("Accuracy")
         ax.set_xticks(labels)
