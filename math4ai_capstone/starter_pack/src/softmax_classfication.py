@@ -1,30 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import softmax
+from utils import *
 import copy
 
 
 class SoftMaxClassification:
-    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,max_iter = 200,batch_size=64,optimizer="sgd"):
+    def __init__(self,penalty = "l2",lamda = 1e-4,learning_rate = 0.05,epochs = 200,batch_size=64,optimizer="sgd",init_weights=True):
         self.penalty = penalty
         self.lamda = lamda
         self.learning_rate = learning_rate
-        self.max_iter = max_iter
+        self.epochs = epochs
         self.batch_size = batch_size
         self.loss = []
         self.cache = {}
         self.optimizer=optimizer
+        self.init_weights = init_weights
     
     def fit(self,X_train,y_train):
-        self.loss = []
-        self._initialize_weights(X_train,y_train)
+        self.labels = np.unique(y_train)
+        self.n,self.m = X_train.shape
         
-        Y = np.zeros((self.n,len(self.n_class)))
-        for i, val in enumerate(y_train):
-            Y[i,np.where(self.n_class == val)] = 1
-            
+        self.loss = []
+        if self.init_weights:
+            self._initialize_weights(X_train,y_train)
+        
+        Y = one_hot_encoder(y_train,self.labels) 
         idxs = np.arange(self.n)
-        for _ in range(self.max_iter):
+        
+        for _ in range(self.epochs):
             np.random.shuffle(idxs)
             X_shuffled = X_train[idxs]
             Y_shuffled = Y[idxs]
@@ -40,10 +43,8 @@ class SoftMaxClassification:
             self.loss.append(L)
             
     def _initialize_weights(self,X_train,y_train):
-        self.n,self.m = X_train.shape
-        self.n_class = np.unique(y_train)
-        self.W = np.random.randn(len(self.n_class),self.m)*np.sqrt(1/self.m) 
-        self.b = np.zeros((1,len(self.n_class)))
+        self.W = np.random.randn(len(self.labels),self.m)*np.sqrt(1/self.m) 
+        self.b = np.zeros((1,len(self.labels)))
     
     def _l2(self):
         return 0.5 * self.lamda * np.sum(np.power(self.W,2))
@@ -75,7 +76,7 @@ class SoftMaxClassification:
     def _calculate_loss(self,Y,y_predict):
         return -np.mean(np.sum(Y*np.log(y_predict + 1e-9),axis=1)) + self._l2()
     
-    def plot_decison_boundary(self,X,y,ax=None):
+    def plot_decision_boundary(self,X,y,ax=None):
         if ax is None:
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         if X.shape[1] > 2:
@@ -86,7 +87,7 @@ class SoftMaxClassification:
         X1 = np.sort(X[:,1])
         X0 = -(X1 * w_diff[1] + b_diff)/w_diff[0]
          
-        ax.set_title(f"{self.__class__.__name__} Decision Boundary\n Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f};Iteration:{self.max_iter}")
+        ax.set_title(f"{self.__class__.__name__} Decision Boundary\nOptimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate};Loss:{self.loss[-1]:.4f};Iteration:{self.epochs}")
         ax.set_ylabel("X1")
         ax.set_xlabel("X0")
         ax.scatter(X[:,0],X[:,1],c=y)
@@ -99,9 +100,7 @@ class SoftMaxClassification:
         model = cls(**copy.deepcopy(params))
         model.fit(X,y)
         
-        Y = np.zeros((model.n,len(model.n_class)))
-        for i, val in enumerate(y):
-            Y[i, val] = 1
+        Y = one_hot_encoder(y,np.unique(y))
         
         model._forward(X)
         model.back_propagation(X, Y)    
@@ -124,7 +123,7 @@ class SoftMaxClassification:
                 grad_num[i,j] = (L1 - L2)/(2*epsilon)
                 
         diff = np.linalg.norm(grad_analytic - grad_num) / (np.linalg.norm(grad_analytic) + np.linalg.norm(grad_num))
-        print("Gradient check difference:", diff)
+        print(f"Gradient check difference for {cls.__name__}:", diff)
             
         return diff
    
@@ -133,7 +132,7 @@ class SoftMaxClassification:
         if ax is None:
             fig, ax = plt.subplots(1,1,figsize=(8,6))
         
-        ax.set_title(f"{self.__class__.__name__} Optimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate}")
+        ax.set_title(f"{self.__class__.__name__}\nOptimizer:{self.optimizer.capitalize()};\nLearning rate:{self.learning_rate}")
         ax.plot(range(len(self.loss)),self.loss)
         ax.set_ylabel("Log Loss")
         ax.set_yticks(np.linspace(min(self.loss), max(self.loss), 10))
