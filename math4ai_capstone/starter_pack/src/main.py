@@ -100,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--pca", action="store_true", help="Track A: PCA/SVD and input geometry")
     parser.add_argument("--rss", action="store_true", help="Repeated-seed statistics")
     parser.add_argument("--isc", action="store_true", help="Implementation sanity checks")
+    parser.add_argument("--rce", action="store_true", help="Required core experiments")
    
 
     args = parser.parse_args()
@@ -167,4 +168,41 @@ if __name__ == "__main__":
         model_s.plot_loss(axs[1])
         axs[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         axs[1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        plt.show()
+    if args.rce:
+        # Train and compare both models on the linear Gaussian task. Include decision-boundary plots.
+        # Train and compare both models on the moons task. Include decision-boundary plots.
+        for i,d in enumerate(data[1:],1):
+            text = f"Data set:{data_name[i]}"
+            fig, axs = plt.subplots(2, 2,figsize=(16,10),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+            for ax in axs.flat:
+                ax.text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=ax.transAxes,bbox=dict(facecolor='white', alpha=0.7))
+                
+            ss = SoftMaxClassification()
+            ss.fit(*d[0:2])
+            axs[0,0].text(0.5,0.4,f"Accuracy :{accuracy(ss.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[0,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            ss.plot_loss(ax=axs[0,0])
+            ss.plot_decision_boundary(*d[0:2],ax=axs[0,1])
+            
+            nn = NeuralNetwork()
+            nn.fit(*d[0:2])
+            axs[1,0].text(0.5,0.4,f"Accuracy :{accuracy(nn.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[1,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            nn.plot_loss(ax=axs[1,0])
+            nn.plot_decision_boundary(*d[0:2],ax=axs[1,1])
+            plt.show()
+
+        # Train and compare both models on the fixed digits benchmark using the same preprocessingand split.
+        text = f"Data set:{data_name[0]}"
+        fig, axs = plt.subplots(1, 2,figsize=(16,6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+
+        ss = SoftMaxClassification()
+        ss.fit(X_d_train,y_d_train)
+        axs[0].text(0.5,0.5,f"Data set:{data_name[0]}\nAccuracy {accuracy(ss.predict(X_d_test),y_d_test):.4f}",color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        ss.plot_loss(ax=axs[0])
+
+
+        nn = NeuralNetwork()
+        nn.fit(X_d_train,y_d_train)
+        axs[1].text(0.5,0.5,f"Data set:{data_name[0]}\nAccuracy {accuracy(nn.predict(X_d_test),y_d_test):.4f}",color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        nn.plot_loss(ax=axs[1])
         plt.show()
