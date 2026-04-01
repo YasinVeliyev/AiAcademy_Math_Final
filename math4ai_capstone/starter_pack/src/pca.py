@@ -16,6 +16,7 @@ def plot_scree(X_d_train):
     plt.xlabel('Number of Components')
     plt.ylabel('Cumulative Explained Variance')
     plt.grid()
+    plt.savefig("scree_plot.png", bbox_inches="tight", dpi=150)
     plt.show()
 
 

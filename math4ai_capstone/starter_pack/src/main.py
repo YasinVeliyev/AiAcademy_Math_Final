@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import itertools
 import argparse
+import os
 matplotlib.use("TkAgg")
-
+print(os.getcwd())
 from validation import Validation
 from nn import NeuralNetwork
 from softmax_classfication import SoftMaxClassification
@@ -60,8 +61,10 @@ def one_failure_case_analysis():
     ss = SoftMaxClassification()
     Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[0])
 
+
     nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
     Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[1])
+    plt.savefig("one_failure_case_analysis_small_data.png", bbox_inches="tight", dpi=150)
     plt.show()
     
     fig, axs = plt.subplots(2, 2,figsize=(18, 12),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
@@ -69,6 +72,7 @@ def one_failure_case_analysis():
     plot_hist(y_d_train,idxs,axs[0])
     nn = NeuralNetwork(optimizer="adam",learning_rate=0.3,size=[8])
     Validation.test_model(nn,X_d_train[idxs],y_d_train[idxs],X_d_val,y_d_val,X_d_test,y_d_test,axes=axs[1])
+    plt.savefig("one_failure_case_analysis_bias_adam_lr_big_nn.png", bbox_inches="tight", dpi=150)
     plt.show()
 
 
@@ -89,6 +93,7 @@ def compare_at_fixed_pca_dimension(dimensions:list,estimator,X_Train,y_train,X_v
         text = f"Data set {data_name[0]}\nDimension: {d}\nAccuracy :{acc:.4f}"
         axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes)
         model_pca.plot_loss(axs[i])
+    plt.savefig("compare_at_fixed_pca_dimension.png", bbox_inches="tight", dpi=150)
     plt.show()
 
 
@@ -116,6 +121,7 @@ if __name__ == "__main__":
             axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
             axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
             model_nn.plot_loss(axs[i])
+        plt.savefig("Optimizer_study_on_digits.png", bbox_inches="tight", dpi=150)
         plt.show()
         
         #Capacity ablation on moons. Use hidden widths {2, 8, 32}. Interpret what changes in the learned decision boundary.
@@ -125,7 +131,9 @@ if __name__ == "__main__":
             nn.fit(X_m_train,y_m_train)
             ax = axs[i//3,i%3]
             nn.plot_decision_boundary(X_m_train,y_m_train,ax)
+        plt.savefig("Capacity ablation on moons.png", bbox_inches="tight", dpi=150)
         plt.show()
+        
     
     if args.isc:
         gradient_sanity_check()
@@ -137,6 +145,7 @@ if __name__ == "__main__":
         Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[0])
         nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
         Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[1])
+        plt.savefig("Implementation sanity checks.png", bbox_inches="tight", dpi=150)
         plt.show()
         
         #confirmation that predicted class probabilities sum to one,
@@ -155,7 +164,10 @@ if __name__ == "__main__":
         X_mean,X_centered,Vt = pca_dimensions(X_d_train)
         X_2d = X_centered @ Vt[:2].T
         plt.scatter(X_2d[:,0], X_2d[:,1], c=y_d_train, cmap='tab10')
+        plt.xlabel("X_2D0")
+        plt.ylabel("X_2D1")
         plt.title("2D PCA visualization of the digits data")
+        plt.savefig("2D PCA visualization of the digits data.png", bbox_inches="tight", dpi=150)
         plt.show()
 
     if args.rss or args.cpad:
@@ -168,6 +180,7 @@ if __name__ == "__main__":
         model_s.plot_loss(axs[1])
         axs[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         axs[1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        plt.savefig("Statistics for 5 Seeds.png", bbox_inches="tight", dpi=150)
         plt.show()
     if args.rce:
         # Train and compare both models on the linear Gaussian task. Include decision-boundary plots.
@@ -189,6 +202,7 @@ if __name__ == "__main__":
             axs[1,0].text(0.5,0.4,f"Accuracy :{accuracy(nn.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[1,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
             nn.plot_loss(ax=axs[1,0])
             nn.plot_decision_boundary(*d[0:2],ax=axs[1,1])
+            plt.savefig(f"Required core experiments_{data_name[i]}.png", bbox_inches="tight", dpi=150)
             plt.show()
 
         # Train and compare both models on the fixed digits benchmark using the same preprocessingand split.
@@ -205,4 +219,5 @@ if __name__ == "__main__":
         nn.fit(X_d_train,y_d_train)
         axs[1].text(0.5,0.5,f"Data set:{data_name[0]}\nAccuracy {accuracy(nn.predict(X_d_test),y_d_test):.4f}",color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         nn.plot_loss(ax=axs[1])
+        plt.savefig("fixed digits benchmark.png", bbox_inches="tight", dpi=150)
         plt.show()

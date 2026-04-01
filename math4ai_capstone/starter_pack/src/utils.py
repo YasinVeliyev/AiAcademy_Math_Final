@@ -19,10 +19,14 @@ def one_hot_encoder(y,labels):
 
 def plot_hist(y,idxs,axs):
     bins = np.arange(y.min()-0.5, y.max()+1.5, 1)
+    axs[0].set_xlabel("Labels")
+    axs[0].set_ylabel("Count")
     axs[0].set_xticks(np.unique(y))
     axs[0].set_title("Orjinal Data")
     axs[0].hist(y,bins=bins,rwidth=0.8,color="orange")
 
+    axs[1].set_xlabel("Labels")
+    axs[1].set_ylabel("Count")
     axs[1].set_title("Bias edilmiş data")
     axs[1].set_xticks(np.unique(y))
     axs[1].hist(y[idxs],bins=bins,rwidth=0.8,color="orange")
