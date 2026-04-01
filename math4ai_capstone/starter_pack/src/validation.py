@@ -88,9 +88,9 @@ class Validation():
 
 
     @staticmethod
-    def test_model(model,X_train,y_train,X_val,y_val,X_test,y_test,epochs=200,ax=None):
-        if ax is None:
-            fig,ax = plt.subplots(1,1,figsize=(8,6))
+    def test_model(model,X_train,y_train,X_val,y_val,X_test,y_test,epochs=200,axes=np.zeros((1,2))):
+        if not np.all(axes):
+            fig,axes = plt.subplots(1,2,figsize=(8,6))
         
         model.labels = np.unique(y_train)
         model.n,model.m = X_train.shape
@@ -98,6 +98,11 @@ class Validation():
         train_loss=[]
         val_loss = []
         test_loss = []
+
+        train_acc=[]
+        val_acc = []
+        test_acc = []
+        
         labels = np.unique(y_train)
         Y_train = one_hot_encoder(y_train,labels)
         Y_val = one_hot_encoder(y_val,labels)
@@ -107,15 +112,19 @@ class Validation():
             A = model._forward(X_train)
             y_train_pred = model._predict(X_train) 
             train_loss.append(model._calculate_loss(Y_train,y_train_pred))
+            train_acc.append(accuracy(model.predict(X_train),y_train))
             
             y_val_pred = model._predict(X_val)
             val_loss.append(model._calculate_loss(Y_val,y_val_pred))
+            val_acc.append(accuracy(model.predict(X_val),y_val))
             
             y_test_pred = model._predict(X_test)
             test_loss.append(model._calculate_loss(Y_test,y_test_pred))
+            test_acc.append(accuracy(model.predict(X_test),y_test))
             
             model.back_propagation(X_train,Y_train)
             model._optimize()
+        
         arr = np.hstack([train_loss,val_loss])
     
         # plt.ylim(0,np.quantile(arr,0.95)*1.1)
@@ -123,14 +132,24 @@ class Validation():
         acc_train = accuracy(model.predict(X_train),y_train)
         acc_val = accuracy(model.predict(X_val),y_val)
         acc_test=accuracy(model.predict(X_test),y_test)
+        
         text = f"Train Accuracy:{acc_train:.4f}\nValidation Accuracy:{acc_val:.4f}\nTest Accuracy:{acc_test:.4f}\n"
-        ax.set_title(f"{model.__class__.__name__}\nOptimizer:{model.optimizer.capitalize()};\nLearning rate:{model.learning_rate}")
-        ax.text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=ax.transAxes,bbox=dict(facecolor='white', alpha=0.7))
-        ax.plot(range(len(train_loss)),train_loss,label="Train Loss")
-        ax.plot(range(len(val_loss)),val_loss,label="Validation Loss")
-        ax.plot(range(len(test_loss)),test_loss,label="Test Loss")
-        ax.legend()
-        ax.grid()
+        axes[0].set_title(f"Loss {model.__class__.__name__}")
+        axes[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axes[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        axes[0].plot(range(len(train_loss)),train_loss,label="Train Loss")
+        axes[0].plot(range(len(val_loss)),val_loss,label="Validation Loss")
+        axes[0].plot(range(len(test_loss)),test_loss,label="Test Loss")
+        axes[0].legend()
+        axes[0].grid()
+
+       
+        axes[1].set_title(f"Accuracy {model.__class__.__name__}")
+        axes[1].plot(range(len(train_acc)),train_acc,label="Train Accuracy")
+        axes[1].plot(range(len(val_acc)),val_acc,label="Validation Accuracy")
+        axes[1].plot(range(len(test_acc)),test_acc,label="Test Accuracy")
+        axes[1].set_yticks(np.linspace(0,1,11))
+        axes[1].legend()
+        axes[1].grid()
         
         
     def accuracy_per_class(self,X,y,ax=None):
@@ -161,6 +180,9 @@ class Validation():
         ax.axhline(y=acc, color="red", linestyle="--",
                    label=f"Overall Vaildation Accuracy: {acc:.4f}")
         ax.legend()
+        
+    
+        
         
     
         

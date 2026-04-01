@@ -11,6 +11,7 @@ def plot_scree(X_d_train):
     total_var = np.sum(explained_variance)
     var_ratio = explained_variance / total_var
 
+    plt.title("Scree plot")
     plt.plot(np.cumsum(var_ratio))
     plt.xlabel('Number of Components')
     plt.ylabel('Cumulative Explained Variance')

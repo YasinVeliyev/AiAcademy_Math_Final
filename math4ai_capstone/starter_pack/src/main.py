@@ -56,19 +56,19 @@ def gradient_sanity_check():
 
 
 def one_failure_case_analysis():
-    fig,axs = plt.subplots(1,2,figsize=(18,6))
+    fig,axs = plt.subplots(2,2,figsize=(18,12))
     ss = SoftMaxClassification()
-    Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,ax = axs[0])
+    Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[0])
 
     nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
-    Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,ax = axs[1])
+    Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[1])
     plt.show()
     
-    fig, axs = plt.subplots(1, 3,figsize=(21, 6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+    fig, axs = plt.subplots(2, 2,figsize=(18, 12),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
     idxs = make_bias(y_d_train,1)
-    plot_hist(y_d_train,idxs,axs[:2])
+    plot_hist(y_d_train,idxs,axs[0])
     nn = NeuralNetwork(optimizer="adam",learning_rate=0.3,size=[8])
-    Validation.test_model(nn,X_d_train[idxs],y_d_train[idxs],X_d_val,y_d_val,X_d_test,y_d_test,ax=axs[2])
+    Validation.test_model(nn,X_d_train[idxs],y_d_train[idxs],X_d_val,y_d_val,X_d_test,y_d_test,axes=axs[1])
     plt.show()
 
 
@@ -95,18 +95,76 @@ def compare_at_fixed_pca_dimension(dimensions:list,estimator,X_Train,y_train,X_v
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ofca", action="store_true", help="One failure-case analysis.")
-    parser.add_argument("--gsc", action="store_true", help="Gradient sanity check")
-    parser.add_argument("--cafpd", action="store_true", help="Softmax comparison at fixed PCA dimensions m ∈ {10, 20, 40}")
-    parser.add_argument("--psp", action="store_true", help="Plot scree plot")
+    parser.add_argument("--cpad", action="store_true", help="Checkpoint policy across datasets")
+    parser.add_argument("--ra", action="store_true", help="Required ablations")
+    parser.add_argument("--pca", action="store_true", help="Track A: PCA/SVD and input geometry")
+    parser.add_argument("--rss", action="store_true", help="Repeated-seed statistics")
+    parser.add_argument("--isc", action="store_true", help="Implementation sanity checks")
+   
 
     args = parser.parse_args()
-    if args.ofca:
+    if args.ra:
         one_failure_case_analysis()
-    if args.gsc:
-        gradient_sanity_check()
+        fig,axs =  plt.subplots(1,3,figsize=(18,6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+        
+        # Optimizer study on digits.
+        for i,o in enumerate(["adam","momentum","sgd"]):
+            text = f"Data set {data_name[0]};Optimizer: {o.capitalize()}"
+            model_nn = NeuralNetwork(optimizer=o)
+            model_nn.fit(X_d_train,y_d_train)
+            axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            model_nn.plot_loss(axs[i])
+        plt.show()
+        
+        #Capacity ablation on moons. Use hidden widths {2, 8, 32}. Interpret what changes in the learned decision boundary.
+        fig, axs = plt.subplots(3, 3,figsize=(21, 18),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+        for i,(o,s) in enumerate(itertools.product(["sgd","adam","momentum"],[2,8,32])):
+            nn = NeuralNetwork(size=[s],optimizer=o)
+            nn.fit(X_m_train,y_m_train)
+            ax = axs[i//3,i%3]
+            nn.plot_decision_boundary(X_m_train,y_m_train,ax)
+        plt.show()
     
-    if args.cafpd:
-        compare_at_fixed_pca_dimension([10,20,40],SoftMaxClassification,X_d_train,y_d_train,X_d_val,y_d_val)
-    if args.psp:
+    if args.isc:
+        gradient_sanity_check()
+
+        # successful overfitting of a very small subset of training examples,
+        # evidence that the loss decreases on a tiny subset after a few updates,
+        fig,axs = plt.subplots(2,2,figsize=(18,12))
+        ss = SoftMaxClassification()
+        Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[0])
+        nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
+        Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[1])
+        plt.show()
+        
+        #confirmation that predicted class probabilities sum to one,
+        s = X_d_test.shape[0]
+        ss = SoftMaxClassification(learning_rate=0.05,batch_size=32)
+        ss.fit(X_d_train,y_d_train)
+        print(ss._predict(X_d_test[np.random.randint(0,s)]).sum(axis=1),nn._predict(X_d_test[np.random.randint(0,s)]).sum(axis=1))
+    
+    if args.pca:
+        # one scree plot
         plot_scree(X_d_train)
+        #  one small softmax comparison at fixed PCA dimensions m ∈ {10, 20, 40},
+        compare_at_fixed_pca_dimension([10,20,40],SoftMaxClassification,X_d_train,y_d_train,X_d_val,y_d_val)
+
+        # one 2D PCA visualization of the digits data,
+        X_mean,X_centered,Vt = pca_dimensions(X_d_train)
+        X_2d = X_centered @ Vt[:2].T
+        plt.scatter(X_2d[:,0], X_2d[:,1], c=y_d_train, cmap='tab10')
+        plt.title("2D PCA visualization of the digits data")
+        plt.show()
+
+    if args.rss or args.cpad:
+        fig,axs =  plt.subplots(1,2,figsize=(18,6))
+        print(f"--- Statistics for 5 Seeds ---")
+        text = f"Data set {data_name[0]}\nOptimizer: SGD"
+        validation_s = Validation(SoftMaxClassification,*data[0],*test_data[0])
+        acc,model_s = validation_s.fit()
+        validation_s.report(axs[0])
+        model_s.plot_loss(axs[1])
+        axs[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        axs[1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        plt.show()
