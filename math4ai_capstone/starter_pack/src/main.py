@@ -12,10 +12,10 @@ from softmax_classfication import SoftMaxClassification
 from utils import *
 from pca import pca_dimensions,plot_scree
 
-data_digits = np.load(r"math4ai_capstone/starter_pack/data/digits_data.npz")
-digits_split_indices = np.load(r"math4ai_capstone/starter_pack/data/digits_split_indices.npz")
-data_linear = np.load(r"math4ai_capstone/starter_pack/data/linear_gaussian.npz")
-data_moons = np.load(r"math4ai_capstone/starter_pack/data/moons.npz")
+data_digits = np.load(r"starter_pack/data/digits_data.npz")
+digits_split_indices = np.load(r"starter_pack/data/digits_split_indices.npz")
+data_linear = np.load(r"starter_pack/data/linear_gaussian.npz")
+data_moons = np.load(r"starter_pack/data/moons.npz")
 
 
 X_d_train = data_digits["X"][digits_split_indices["train_idx"]]
@@ -57,22 +57,15 @@ def gradient_sanity_check():
 
 
 def one_failure_case_analysis():
-    fig,axs = plt.subplots(2,2,figsize=(18,12))
-    ss = SoftMaxClassification()
-    Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[0])
-
-
-    nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
-    Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,axes = axs[1])
-    plt.savefig("one_failure_case_analysis_small_data.png", bbox_inches="tight", dpi=150)
-    plt.show()
-    
-    fig, axs = plt.subplots(2, 2,figsize=(18, 12),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+    fig, axs = plt.subplots(2, 2,figsize=(18, 10),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
     idxs = make_bias(y_d_train,1)
     plot_hist(y_d_train,idxs,axs[0])
     nn = NeuralNetwork(optimizer="adam",learning_rate=0.3,size=[8])
-    Validation.test_model(nn,X_d_train[idxs],y_d_train[idxs],X_d_val,y_d_val,X_d_test,y_d_test,axes=axs[1])
-    plt.savefig("one_failure_case_analysis_bias_adam_lr_big_nn.png", bbox_inches="tight", dpi=150)
+    t_idxs = np.where((y_d_test==1)|(y_d_test==3))
+    v_idxs = np.where((y_d_val==1)|(y_d_val==3)|(y_d_val==8))
+    Validation.test_model(nn,X_d_train[idxs],y_d_train[idxs],X_d_val[v_idxs],y_d_val[v_idxs],X_d_test[t_idxs],y_d_test[t_idxs],axes=axs[1])
+    
+    plt.savefig(r"starter_pack/figures/one_failure_case_analysis.png")
     plt.show()
 
 
@@ -93,7 +86,8 @@ def compare_at_fixed_pca_dimension(dimensions:list,estimator,X_Train,y_train,X_v
         text = f"Data set {data_name[0]}\nDimension: {d}\nAccuracy :{acc:.4f}"
         axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes)
         model_pca.plot_loss(axs[i])
-    plt.savefig("compare_at_fixed_pca_dimension.png", bbox_inches="tight", dpi=150)
+    
+    plt.savefig(r"starter_pack/figures/compare_at_fixed_pca_dimension.png", bbox_inches="tight", dpi=150)
     plt.show()
 
 
@@ -111,17 +105,20 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.ra:
         one_failure_case_analysis()
-        fig,axs =  plt.subplots(1,3,figsize=(18,6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
-        
         # Optimizer study on digits.
-        for i,o in enumerate(["adam","momentum","sgd"]):
-            text = f"Data set {data_name[0]};Optimizer: {o.capitalize()}"
-            model_nn = NeuralNetwork(optimizer=o)
-            model_nn.fit(X_d_train,y_d_train)
-            axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
-            axs[i].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i].transAxes,bbox=dict(facecolor='white', alpha=0.7))
-            model_nn.plot_loss(axs[i])
-        plt.savefig("Optimizer_study_on_digits.png", bbox_inches="tight", dpi=150)
+        fig, axs = plt.subplots(1, 3,figsize=(18, 6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+        for i,o in enumerate(["sgd","adam","momentum"]):
+            nn = NeuralNetwork(optimizer=o)
+            nn.fit(X_d_train,y_d_train)
+            train_acc = accuracy(nn.predict(X_d_train),y_d_train)
+            val_acc = accuracy(nn.predict(X_d_val),y_d_val)
+            test_acc = accuracy(nn.predict(X_d_test),y_d_test)
+            text = f"Train Accuracy :{train_acc:.4f}\nValidation Accuracy :{val_acc:.4f}\nTest Accuracy :{test_acc:.4f}"
+            ax = axs[i]
+            ax.text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=ax.transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            nn.plot_loss(ax)
+       
+        plt.savefig(r"starter_pack/figures/Optimizer_study_on_digits.png")
         plt.show()
         
         #Capacity ablation on moons. Use hidden widths {2, 8, 32}. Interpret what changes in the learned decision boundary.
@@ -131,21 +128,39 @@ if __name__ == "__main__":
             nn.fit(X_m_train,y_m_train)
             ax = axs[i//3,i%3]
             nn.plot_decision_boundary(X_m_train,y_m_train,ax)
-        plt.savefig("Capacity ablation on moons.png", bbox_inches="tight", dpi=150)
+       
+        plt.savefig(r"starter_pack/figures/Capacity_ablation_on_moons.png", bbox_inches="tight", dpi=150)
         plt.show()
         
     
     if args.isc:
         gradient_sanity_check()
+        # evidence that the loss decreases on a tiny subset after a few updates,
+        fig, axs = plt.subplots(1, 2,figsize=(16,6),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+
+        ss = SoftMaxClassification(epochs=10)
+        ss.fit(X_d_train[:10],y_d_train[:10])
+        ss.plot_loss(ax=axs[0])
+
+        nn = NeuralNetwork(epochs=10)
+        nn.fit(X_d_train[:10],y_d_train[:10])
+        ss.plot_loss(ax=axs[1])
+        
+        plt.savefig(r"starter_pack/figures/evidence_that_the_loss_decreases_on_a_tiny_subset_after_a_few_updates.png")
+        plt.show()
 
         # successful overfitting of a very small subset of training examples,
-        # evidence that the loss decreases on a tiny subset after a few updates,
-        fig,axs = plt.subplots(2,2,figsize=(18,12))
-        ss = SoftMaxClassification()
-        Validation.test_model(ss,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[0])
-        nn = NeuralNetwork(optimizer="adam",learning_rate=0.001,size=[64])
-        Validation.test_model(nn,X_d_train[:30],y_d_train[:30],X_d_val,y_d_val,X_d_test,y_d_test,epochs=200,axes = axs[1])
-        plt.savefig("Implementation sanity checks.png", bbox_inches="tight", dpi=150)
+        fig, axs = plt.subplots(2, 2,figsize=(18, 12),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+        idxs = make_bias(y_l_train,1)
+        plot_hist(y_l_train,idxs,axs[0])
+        ss = SoftMaxClassification(learning_rate=0.05,batch_size=32)
+
+        t_idxs = np.where((y_l_test==1))
+        v_idxs = np.where((y_l_val==1))
+
+        Validation.test_model(ss,X_l_train[idxs],y_l_train[idxs],X_l_val[v_idxs],y_l_val[v_idxs],X_l_test[t_idxs],y_l_test[t_idxs],axes=axs[1])
+        
+        plt.savefig(r"starter_pack/figures/successful_overfitting_of_a_very_small_subset_of_training_examples.png")
         plt.show()
         
         #confirmation that predicted class probabilities sum to one,
@@ -166,22 +181,31 @@ if __name__ == "__main__":
         plt.scatter(X_2d[:,0], X_2d[:,1], c=y_d_train, cmap='tab10')
         plt.xlabel("X_2D0")
         plt.ylabel("X_2D1")
-        plt.title("2D PCA visualization of the digits data")
-        plt.savefig("2D PCA visualization of the digits data.png", bbox_inches="tight", dpi=150)
+       
+        plt.savefig(r"starter_pack/figures/2D_PCA_visualization_of_the_digits_data.png", bbox_inches="tight", dpi=150)
         plt.show()
 
     if args.rss or args.cpad:
-        fig,axs =  plt.subplots(1,2,figsize=(18,6))
         print(f"--- Statistics for 5 Seeds ---")
-        text = f"Data set {data_name[0]}\nOptimizer: SGD"
-        validation_s = Validation(SoftMaxClassification,*data[0],*test_data[0])
-        acc,model_s = validation_s.fit()
-        validation_s.report(axs[0])
-        model_s.plot_loss(axs[1])
-        axs[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
-        axs[1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
-        plt.savefig("Statistics for 5 Seeds.png", bbox_inches="tight", dpi=150)
-        plt.show()
+        for j in range(3):
+            fig,axs =  plt.subplots(3,2,figsize=(21,18),gridspec_kw={"hspace": 0.4, "wspace": 0.3})
+            for (i,o) in enumerate(["adam","momentum","sgd"]):
+                text = f"Data set:{data_name[j]};Optimizer: {o.capitalize()}"
+                validation_nn = Validation(NeuralNetwork,*data[j],*test_data[j],params={"size":[32],"optimizer":o})
+                acc_m,model_nn = validation_nn.fit()
+                axs[i,0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+                
+                val_accuacy = accuracy(model_nn.predict(data[j][2]),data[j][3])
+                train_accuracy = accuracy(model_nn.predict(data[j][0]),data[j][1])
+                test_accuacy = accuracy(model_nn.predict(test_data[j][0]),test_data[j][1])
+                
+                text = f"Data set:{data_name[j]};Optimizer: {o.capitalize()}\nTrain Accuracy {train_accuracy:.4f}\nValidation Accuracy {val_accuacy:.4f}\nTest Accuracy {test_accuacy:.4f}"
+                axs[i,1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[i,1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+                validation_nn.report(axs[i,0])
+                model_nn.plot_loss(axs[i,1])
+            plt.savefig(rf"starter_pack/figures/repeated_seed_statistics_{data_name[j]}.png")
+            plt.title("Repeated-seed statistics and Checkpoint policy across datasets")
+            plt.show()
     if args.rce:
         # Train and compare both models on the linear Gaussian task. Include decision-boundary plots.
         # Train and compare both models on the moons task. Include decision-boundary plots.
@@ -193,16 +217,16 @@ if __name__ == "__main__":
                 
             ss = SoftMaxClassification()
             ss.fit(*d[0:2])
-            axs[0,0].text(0.5,0.4,f"Accuracy :{accuracy(ss.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[0,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            axs[0,0].text(0.5,0.4,f"Test Accuracy :{accuracy(ss.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[0,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
             ss.plot_loss(ax=axs[0,0])
             ss.plot_decision_boundary(*d[0:2],ax=axs[0,1])
             
             nn = NeuralNetwork()
             nn.fit(*d[0:2])
-            axs[1,0].text(0.5,0.4,f"Accuracy :{accuracy(nn.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[1,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+            axs[1,0].text(0.5,0.4,f"Test Accuracy :{accuracy(nn.predict(test_data[i][0]),test_data[i][1]):.4f}",color="black",fontsize=14,ha="center",transform=axs[1,0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
             nn.plot_loss(ax=axs[1,0])
             nn.plot_decision_boundary(*d[0:2],ax=axs[1,1])
-            plt.savefig(f"Required core experiments_{data_name[i]}.png", bbox_inches="tight", dpi=150)
+            plt.savefig(rf"starter_pack/figures/required_core_experiments_{data_name[i]}.png", bbox_inches="tight", dpi=150)
             plt.show()
 
         # Train and compare both models on the fixed digits benchmark using the same preprocessingand split.
@@ -211,13 +235,28 @@ if __name__ == "__main__":
 
         ss = SoftMaxClassification()
         ss.fit(X_d_train,y_d_train)
-        axs[0].text(0.5,0.5,f"Data set:{data_name[0]}\nAccuracy {accuracy(ss.predict(X_d_test),y_d_test):.4f}",color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+
+        val_accuacy = accuracy(ss.predict(X_d_val),y_d_val)
+        train_accuracy = accuracy(ss.predict(X_d_train),y_d_train)
+        test_accuacy = accuracy(ss.predict(X_d_test),y_d_test)
+
+        text = f"Data set:{data_name[0]}\nTrain Accuracy {train_accuracy:.4f}\nValidation Accuracy {val_accuacy:.4f}\nTest Accuracy {test_accuacy:.4f}"
+
+        axs[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         ss.plot_loss(ax=axs[0])
 
 
         nn = NeuralNetwork()
         nn.fit(X_d_train,y_d_train)
-        axs[1].text(0.5,0.5,f"Data set:{data_name[0]}\nAccuracy {accuracy(nn.predict(X_d_test),y_d_test):.4f}",color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
+        val_accuacy = accuracy(nn.predict(X_d_val),y_d_val)
+        train_accuracy = accuracy(nn.predict(X_d_train),y_d_train)
+        test_accuacy = accuracy(nn.predict(X_d_test),y_d_test)
+
+        text = f"Data set:{data_name[0]}\nTrain Accuracy {train_accuracy:.4f}\nValidation Accuracy {val_accuacy:.4f}\nTest Accuracy {test_accuacy:.4f}"
+
+
+        axs[1].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axs[1].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         nn.plot_loss(ax=axs[1])
-        plt.savefig("fixed digits benchmark.png", bbox_inches="tight", dpi=150)
+        
+        plt.savefig(rf"starter_pack/figures/required_core_experiments_digits.png", bbox_inches="tight", dpi=150)
         plt.show()

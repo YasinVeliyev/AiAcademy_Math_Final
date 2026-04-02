@@ -22,23 +22,19 @@ class Validation():
         self.y_test = y_test
         self.results = []
         self.models = []
-        self.best_epoch= None
         self.params = params
         self.epochs = epochs
-        self.W = None
-        self.b = None
+        
         
     def fit(self):
         self.select_best_params_and_epochs()
         for i in range(self.cv):
             np.random.seed(i)
-            model = self.estimator(**copy.deepcopy(self.params),epochs=self.best_epoch,init_weights=False);
-            model.W = copy.deepcopy(self.W)
-            model.b = copy.deepcopy(self.b)
+            model = self.estimator(**copy.deepcopy(self.params),epochs=self.best_epoch)
             model.fit(self.X_train,self.y_train)
+            self.models.append(model)
             y_pred = model.predict(self.X_test)
             self.results.append(accuracy(y_pred,self.y_test))
-            self.models.append(model)
         return max(self.results),self.models[np.argmax(self.results)]
 
     def select_best_params_and_epochs(self):
@@ -51,15 +47,16 @@ class Validation():
         Y_train = one_hot_encoder(self.y_train,model.labels)
         Y_val = one_hot_encoder(self.y_val,model.labels)
         
+        
         for j in range(self.epochs):
             A = model._forward(self.X_train)
+            y_train_pred=model._predict(self.X_train)
+            model.loss.append(model._calculate_loss(Y_train,y_train_pred))
 
             y_val_pred = model._predict(self.X_val)
             v_loss = model._calculate_loss(Y_val,y_val_pred)
             
             if v_loss < loss:
-                self.W = copy.deepcopy(model.W)
-                self.b = copy.deepcopy(model.b)
                 self.best_epoch = j
                 loss = v_loss
                 
@@ -134,8 +131,6 @@ class Validation():
         acc_test=accuracy(model.predict(X_test),y_test)
         
         text = f"Train Accuracy:{acc_train:.4f}\nValidation Accuracy:{acc_val:.4f}\nTest Accuracy:{acc_test:.4f}\n"
-        axes[0].set_xlabel("Epochs")
-        axes[0].set_ylabel("Loss")
         axes[0].set_title(f"Loss {model.__class__.__name__}")
         axes[0].text(0.5,0.5,text,color="black",fontsize=14,ha="center",transform=axes[0].transAxes,bbox=dict(facecolor='white', alpha=0.7))
         axes[0].plot(range(len(train_loss)),train_loss,label="Train Loss")
@@ -144,8 +139,7 @@ class Validation():
         axes[0].legend()
         axes[0].grid()
 
-        axes[1].set_xlabel("Epochs")
-        axes[1].set_ylabel("Accuracy")
+       
         axes[1].set_title(f"Accuracy {model.__class__.__name__}")
         axes[1].plot(range(len(train_acc)),train_acc,label="Train Accuracy")
         axes[1].plot(range(len(val_acc)),val_acc,label="Validation Accuracy")
@@ -183,6 +177,9 @@ class Validation():
         ax.axhline(y=acc, color="red", linestyle="--",
                    label=f"Overall Vaildation Accuracy: {acc:.4f}")
         ax.legend()
+        
+    
+        
         
     
         
